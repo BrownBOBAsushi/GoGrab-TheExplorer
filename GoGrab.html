@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GoGrab — Discover Singapore</title>
+<title>GoGrab - Discover Singapore</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
@@ -12,56 +12,43 @@
 </head>
 <body>
 
-<!-- MAP -->
 <div id="map"></div>
-
-<!-- FOG CANVAS -->
 <canvas id="fogCanvas"></canvas>
-
-<!-- PLAYER -->
 <div id="player"></div>
-
-<!-- POI LAYER -->
 <div id="poiLayer"></div>
 
-<!-- HUD -->
 <div id="hud">
   <span id="hudPts">⭐ 0 pts</span>
   <span style="color:rgba(255,255,255,.3)">|</span>
-  <span id="hudExp">🗺️ 0% explored</span>
+  <span id="hudExp">🗺️ 0 stops</span>
 </div>
 
-<!-- LOGO -->
 <div id="logo">Go<span>Grab</span></div>
 
-<!-- MODE TOGGLE -->
 <div id="modeToggle">
   <span id="modeLabel">🗺️ Tourist</span>
   <label class="mode-switch">
-    <input type="checkbox" id="modeCheck" onchange="toggleMode(this.checked)">
+    <input type="checkbox" id="modeCheck">
     <span class="mode-slider"></span>
   </label>
   <span style="font-size:12px;color:rgba(255,255,255,.5)">Explore</span>
 </div>
 
-<!-- GPS STATUS -->
 <div id="gpsStatus">📍 Using GPS</div>
 
-<!-- CHATBOT -->
 <div id="chatbot" class="minimized">
-  <div id="chatHeader" onclick="if (chatMinimized) toggleChat()">
+  <div id="chatHeader">
     <span id="chatHeaderLabel"><span class="chat-bubble-icon">🤖</span>GoGrab AI</span>
     <span class="chat-bubble-icon" aria-hidden="true">🤖</span>
-    <button id="chatMinBtn" onclick="toggleChat(event)" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">—</button>
+    <button id="chatMinBtn" type="button" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">—</button>
   </div>
   <div id="chatMessages"></div>
   <div id="chatInputRow">
     <input id="chatInput" type="text" placeholder="What do you love to eat?"/>
-    <button onclick="sendChat()">→</button>
+    <button id="chatSendBtn" type="button">→</button>
   </div>
 </div>
 
-<!-- GUIDED DISCOVERY -->
 <div id="recommendationTray">
   <div class="recommendation-tray-top">
     <div class="recommendation-tray-copy">
@@ -70,8 +57,8 @@
     </div>
     <div class="recommendation-collapsed-label" id="recommendationCollapsedLabel">Stops</div>
     <div class="recommendation-tray-actions">
-      <button class="tray-toggle-btn" id="toggleTrayBtn" onclick="toggleRecommendationTray()">Hide</button>
-      <button id="recenterBtn" onclick="recenterToPlayer()">Recenter</button>
+      <button class="tray-toggle-btn" id="toggleTrayBtn" type="button">Hide</button>
+      <button id="recenterBtn" type="button">Recenter</button>
     </div>
   </div>
   <div id="routeSummaryHud" class="route-summary-hud">
@@ -83,16 +70,13 @@
   <div id="recommendationCards"></div>
 </div>
 
-<!-- MODAL -->
 <div id="modal">
   <div id="modalBox">
-
-    <!-- Info View -->
     <div id="viewInfo" class="modal-view active">
       <div class="m-handle"></div>
       <div class="m-icon" id="mIcon">🥐</div>
       <div class="m-name" id="mName">Loading…</div>
-      <div class="m-cat"  id="mCat"></div>
+      <div class="m-cat" id="mCat"></div>
       <div class="m-meta">
         <span class="m-tag" id="mDist"></span>
         <span class="m-tag" id="mCatTag"></span>
@@ -110,51 +94,46 @@
         <div class="reviews-summary" id="reviewsSummary">Pulling comparison notes for this stop...</div>
         <div class="review-list" id="reviewsList"></div>
       </div>
-      <!-- Action buttons -->
       <div style="display:flex;gap:8px;padding:12px 0 0">
-        <button class="m-action-btn" onclick="getDirections()">🗺️ How to get there</button>
-        <button class="m-action-btn m-action-grab" onclick="bookGrab()">🚗 Book a GrabCar</button>
+        <button class="m-action-btn" id="infoDirectionsBtn" type="button">🗺️ How to get there</button>
+        <button class="m-action-btn m-action-grab" id="infoGrabBtn" type="button">🚗 Book a GrabCar</button>
       </div>
-      <button class="m-spin-btn" id="goSpinBtn" onclick="goToSpin()">🎰 SPIN THIS STOP</button>
-      <button class="m-close-btn" onclick="closeModal()">Close</button>
+      <button class="m-spin-btn" id="goSpinBtn" type="button">🎰 SPIN THIS STOP</button>
+      <button class="m-close-btn" id="closeModalBtn" type="button">Close</button>
     </div>
 
-    <!-- Spin View -->
     <div id="viewSpin" class="modal-view">
       <div class="vs-header">
-        <button class="vs-back" onclick="showView('viewInfo')">← Back</button>
+        <button class="vs-back" id="spinBackBtn" type="button">← Back</button>
         <span class="vs-title" id="vsTitle">Spin this stop</span>
       </div>
       <div id="msDiscWrap">
         <div id="msDisc">🎰</div>
       </div>
-      <div id="msHint">Drag to spin</div>
+      <div id="msHint">Tap the disc or use Quick Spin</div>
       <div class="m-meta-spin">
         <span class="m-spin-tag" id="mDistSpin"></span>
         <span class="m-spin-tag" id="mCatSpin"></span>
       </div>
       <div id="mDesc" style="font-size:13px;color:rgba(255,255,255,.5);padding:8px 24px 0;text-align:center;line-height:1.5"></div>
-      <!-- Action buttons in spin view -->
       <div style="display:flex;gap:8px;padding:12px 16px 0">
-        <button class="m-action-btn" onclick="getDirections()">🗺️ How to get there</button>
-        <button class="m-action-btn m-action-grab" onclick="bookGrab()">🚗 Book a GrabCar</button>
+        <button class="m-action-btn" id="spinDirectionsBtn" type="button">🗺️ How to get there</button>
+        <button class="m-action-btn m-action-grab" id="spinGrabBtn" type="button">🚗 Book a GrabCar</button>
       </div>
-      <!-- Proximity status + Demo Jump -->
       <div id="proximityBar" style="padding:8px 16px 0;display:flex;align-items:center;gap:8px">
         <div id="proximityStatus" style="flex:1;font-size:12px;color:rgba(255,255,255,.45);text-align:center">
           Get closer to unlock the spin
         </div>
-        <button id="demoJumpBtn" onclick="demoJump()" style="
+        <button id="demoJumpBtn" type="button" style="
           background:rgba(0,177,79,.15);color:rgba(255,255,255,.7);
           border:1px solid rgba(0,177,79,.3);border-radius:10px;
           padding:6px 12px;font-size:12px;font-family:'DM Sans',sans-serif;
           cursor:pointer;white-space:nowrap;transition:all .2s
         ">⚡ Demo Jump</button>
       </div>
-      <button id="quickSpinBtn" onclick="triggerSpin()">⚡ Quick Spin (Demo)</button>
+      <button id="quickSpinBtn" type="button">⚡ Quick Spin (Demo)</button>
     </div>
 
-    <!-- Missions View -->
     <div id="viewMissions" class="modal-view">
       <div class="m-handle"></div>
       <div class="missions-title" id="missionsTitle">🎯 Missions Unlocked!</div>
@@ -163,7 +142,6 @@
       <div class="mission-earning" id="missionsStatus"></div>
     </div>
 
-    <!-- Reward View -->
     <div id="viewReward" class="modal-view">
       <div class="reward-burst" id="rewardBurst">🎉</div>
       <div class="reward-title">STOP UNLOCKED!</div>
@@ -175,32 +153,27 @@
         <div class="voucher-desc">Your next GrabFood order</div>
         <div class="voucher-code">GRABEXP-<span id="voucherCode">XXXXXX</span></div>
       </div>
-      <button class="reward-cta" id="rewardContinueBtn" onclick="continueAfterReward()">See next nearby stop</button>
+      <button class="reward-cta" id="rewardContinueBtn" type="button">See next nearby stop</button>
     </div>
-
   </div>
 </div>
 
-<!-- ONBOARD -->
 <div id="onboard">
   <div class="ob-logo">Go<span>Grab</span></div>
   <div class="ob-sub">Discover Singapore's hidden gems</div>
   <div class="ob-card">
     <h3>🗺️ Tourist Mode</h3>
-    <p>Tell our AI what you love. It highlights 3 hidden spots powered by GrabMaps data.</p>
+    <p>Tell our AI what you love. It highlights 3 nearby stops powered by GrabMaps data.</p>
   </div>
   <div class="ob-card">
-    <h3>🌫️ Explore Mode</h3>
-    <p>Toggle fog-of-war. Move around to reveal the city RPG-style.</p>
+    <h3>Tourist-First Reset</h3>
+    <p>Explore Mode is parked for now so the core tourist loop can be stable, debuggable, and demo-ready.</p>
   </div>
-  <button class="ob-start-btn" onclick="dismiss()">START EXPLORING</button>
+  <button class="ob-start-btn" id="onboardStartBtn" type="button">START EXPLORING</button>
 </div>
 
-<script src="./assets/js/01-config.js"></script>
-<script src="./assets/js/02-poi-state.js"></script>
-<script src="./assets/js/03-player-routing.js"></script>
-<script src="./assets/js/04-map-modal.js"></script>
-<script src="./assets/js/05-effects-input.js"></script>
-<script src="./assets/js/06-app-flow.js"></script>
+<div id="tweaks"></div>
+
+<script type="module" src="./assets/js/app/bootstrap.js"></script>
 </body>
 </html>
