@@ -271,14 +271,17 @@ function dedupePois(pois) {
 }
 
 function fallbackDirections(originLat, originLng, destLat, destLng) {
+  const distanceMeters = haversineMeters(originLat, originLng, destLat, destLng);
+  const walkSeconds = distanceMeters / 1.35;
+
   return {
     fallback: true,
     route: [
       [Number(originLng), Number(originLat)],
       [Number(destLng), Number(destLat)]
     ],
-    distance: 'Walking distance',
-    duration: 'A few minutes'
+    distance: formatDistanceLabel(distanceMeters),
+    duration: formatDurationLabel(walkSeconds)
   };
 }
 
@@ -475,10 +478,48 @@ async function searchNearbyPoisForQuery(userMessage, userLat, userLng) {
       },
       limit: 8
     });
-    return dedupePois(normalizeLivePois(searchResult.places || [], userLat, userLng));
+    return dedupePois(
+      filterRelevantNearbyPois(
+        normalizeLivePois(searchResult.places || [], userLat, userLng),
+        userLat,
+        userLng,
+        3000
+      )
+    );
   }
 
   return [];
+}
+
+async function searchNearbyFoodPoisViaMcpSearch(lat, lng, radiusMeters) {
+  const fallbackKeywords = ['food', 'restaurant', 'hawker', 'bakery', 'cafe'];
+  const collected = [];
+
+  for (const keyword of fallbackKeywords) {
+    try {
+      const searchResult = await callMcpTool('search', {
+        keyword,
+        country: 'SGP',
+        location: {
+          latitude: lat,
+          longitude: lng
+        },
+        limit: 8
+      });
+      collected.push(...normalizeLivePois(searchResult.places || [], lat, lng));
+    } catch (error) {
+      console.warn(`Grab MCP search fallback failed for "${keyword}":`, error.message);
+    }
+  }
+
+  return dedupePois(
+    filterRelevantNearbyPois(
+      collected,
+      lat,
+      lng,
+      radiusMeters
+    )
+  );
 }
 
 function decodePolyline(str, precision = 6) {
@@ -630,22 +671,32 @@ app.get('/api/nearby', async (req, res) => {
 
   try {
     if (GRABMAPS_MCP_TOKEN) {
-      const nearby = await callMcpTool('search_nearby_pois', {
-        latitude: lat,
-        longitude: lng,
-        radius_km: radiusKm,
-        limit: 10
-      });
-      const livePois = filterRelevantNearbyPois(
-        normalizeLivePois(nearby.places || [], lat, lng),
-        lat,
-        lng,
-        radiusMeters
-      );
+      let livePois = [];
+      try {
+        const nearby = await callMcpTool('search_nearby_pois', {
+          latitude: lat,
+          longitude: lng,
+          radius_km: radiusKm,
+          limit: 10
+        });
+        livePois = filterRelevantNearbyPois(
+          normalizeLivePois(nearby.places || [], lat, lng),
+          lat,
+          lng,
+          radiusMeters
+        );
+      } catch (error) {
+        console.warn('Grab MCP nearby tool failed, trying keyword search fallback:', error.message);
+      }
+
+      if (livePois.length === 0) {
+        livePois = await searchNearbyFoodPoisViaMcpSearch(lat, lng, radiusMeters);
+      }
+
       if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab-mcp' });
       }
-      console.warn('Grab Maps MCP nearby returned no usable nearby food POIs, using mock POIs');
+      console.warn('Grab Maps MCP returned no usable nearby food POIs');
     } else if (GRAB_KEY) {
       const nearby = await fetchNearbyFromPartnerApi(lat, lng, radiusKm);
       const livePois = filterRelevantNearbyPois(
@@ -657,13 +708,13 @@ app.get('/api/nearby', async (req, res) => {
       if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab' });
       }
-      console.warn('Grab partner nearby returned no usable nearby food POIs, using mock POIs');
+      console.warn('Grab partner nearby returned no usable nearby food POIs');
     }
   } catch (error) {
     console.error('Nearby API failed:', error.message);
   }
 
-  return res.json({ pois: MOCK_POIS, source: 'mock' });
+  return res.json({ pois: [], source: 'empty' });
 });
 
 app.get('/api/reviews', (req, res) => {
@@ -738,6 +789,9 @@ app.get('/api/directions', async (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const { userMessage, userLat, userLng, availablePOIs } = req.body;
+  const safeAvailablePois = Array.isArray(availablePOIs) && availablePOIs.length > 0
+    ? availablePOIs
+    : [];
 
   if (!userMessage) {
     return res.status(400).json({ error: 'userMessage required' });
@@ -746,7 +800,8 @@ app.post('/api/chat', async (req, res) => {
   if (!GROQ_API_KEY) {
     return res.json({
       reply: 'Here are some great hidden spots near you that locals love!',
-      recommendations: (availablePOIs || MOCK_POIS).slice(0, 3).map((poi) => poi.name)
+      recommendations: safeAvailablePois.slice(0, 3).map((poi) => poi.name),
+      pois: safeAvailablePois.slice(0, 5)
     });
   }
 
@@ -754,7 +809,7 @@ app.post('/api/chat', async (req, res) => {
     const queryPois = await searchNearbyPoisForQuery(userMessage, Number(userLat), Number(userLng));
     const candidatePois = queryPois.length > 0
       ? queryPois
-      : (availablePOIs || MOCK_POIS);
+      : safeAvailablePois;
     const parsed = await createTripPlanWithGroq(userMessage, userLat, userLng, candidatePois);
     if (queryPois.length > 0) {
       parsed.pois = queryPois.slice(0, 5);
@@ -763,8 +818,11 @@ app.post('/api/chat', async (req, res) => {
   } catch (error) {
     console.error('Trip planner AI error:', error.message);
     return res.json({
-      reply: 'Here are some great hidden spots near you that locals love!',
-      recommendations: (availablePOIs || MOCK_POIS).slice(0, 3).map((poi) => poi.name)
+      reply: safeAvailablePois.length > 0
+        ? 'Here are some live spots nearby that locals might like.'
+        : 'I could not find live nearby Grab stops just yet. Try asking again in a moment.',
+      recommendations: safeAvailablePois.slice(0, 3).map((poi) => poi.name),
+      pois: safeAvailablePois.slice(0, 5)
     });
   }
 });
