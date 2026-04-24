@@ -26,17 +26,17 @@ function getFallbackMapStyle() {
   return {
     version: 8,
     sources: {
-      'grab-tiles': {
+      'carto-dark': {
         type: 'raster',
-        tiles: ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'],
+        tiles: [`${API_BASE}/api/tiles/{z}/{x}/{y}`],
         tileSize: 256,
-        attribution: '© GrabMaps | © OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors © CARTO'
       }
     },
     layers: [{
-      id: 'grab-tiles',
+      id: 'carto-dark',
       type: 'raster',
-      source: 'grab-tiles'
+      source: 'carto-dark'
     }]
   };
 }

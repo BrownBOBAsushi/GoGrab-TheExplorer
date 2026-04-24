@@ -11,21 +11,9 @@ async function initMap() {
   }
 
   if (!map) {
-    let style = getFallbackMapStyle();
-    try {
-      const response = await fetch(buildApiUrl(`/api/style.json?theme=${encodeURIComponent(GRAB_STYLE_THEME)}`));
-      if (!response.ok) {
-        throw new Error(`style request failed with ${response.status}`);
-      }
-      style = await response.json();
-      console.log('Using proxied GrabMaps style with raw MapLibre');
-    } catch (styleError) {
-      console.warn('Grab style load failed, using fallback raster style', styleError);
-    }
-
     map = new maplibregl.Map({
       container: 'map',
-      style,
+      style: getFallbackMapStyle(),
       center: [START_LNG, START_LAT],
       zoom: 16,
       interactive: true,
@@ -38,6 +26,10 @@ async function initMap() {
     map.touchZoomRotate.enable();
     map.touchPitch.disable();
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    map.on('error', (e) => {
+      console.warn('MapLibre error:', e?.error?.message || e);
+    });
   }
 
   const handleMapReady = () => {
@@ -114,7 +106,8 @@ function updatePOIPositions() {
     if (!state) continue;
     const isVisible = state.revealed || appMode !== 'explore';
     state.el.style.display = isVisible ? 'block' : 'none';
-    state.marker.setLngLat([poi.lng, poi.lat]);
+    // setLngLat omitted — POI coordinates are fixed at creation time.
+    // maplibre repositions markers automatically on every map move.
   }
 }
 
@@ -309,23 +302,25 @@ function triggerSpin() {
   // Spawn particles at centre
   spawnParticles(window.innerWidth / 2, window.innerHeight / 2, 20);
 
-  setTimeout(() => {
-    const pts = 100;
-    totalPoints += pts;
-    updateHUD();
-    document.getElementById('rewardPts').textContent = '+' + pts + ' pts';
-    document.getElementById('rewardSub').textContent = 'You discovered ' + (activePoi ? activePoi.name : 'a hidden gem') + '!';
-    document.getElementById('voucherCode').textContent = Math.random().toString(36).substr(2,6).toUpperCase();
-    showView('viewReward');
-    showMissionsAfterReward();
-  }, 900);
+  setTimeout(() => { showMissionsThenReward(); }, 900);
 }
 
-function showMissionsAfterReward() {
-  if (!activePoi || !activePoi.missions) return;
+function showMissionsThenReward() {
+  if (!activePoi) return;
+
+  const missions = (activePoi.missions && activePoi.missions.length)
+    ? activePoi.missions
+    : [
+        { i: '📸', d: 'Take a photo here',         p: 50 },
+        { i: '⭐', d: 'Leave a food review',        p: 30 },
+        { i: '🍽️', d: 'Try the signature dish',    p: 20 }
+      ];
+
+  // Populate mission list (all pending at start)
   const list = document.getElementById('missionList');
   list.innerHTML = '';
-  activePoi.missions.forEach(m => {
+  const items = [];
+  missions.forEach(m => {
     const item = document.createElement('div');
     item.className = 'mission-item';
     item.innerHTML = `
@@ -333,15 +328,41 @@ function showMissionsAfterReward() {
       <div class="mission-desc">${m.d}</div>
       <div class="mission-pts">+${m.p} pts</div>
     `;
-    item.addEventListener('click', () => {
-      totalPoints += m.p;
-      updateHUD();
-      item.style.opacity = '0.4';
-      item.style.pointerEvents = 'none';
-      spawnParticles(window.innerWidth / 2, window.innerHeight - 200, 8);
-    });
     list.appendChild(item);
+    items.push({ el: item, pts: m.p });
   });
+
+  document.getElementById('missionsTitle').textContent   = '🎯 Missions Unlocked!';
+  document.getElementById('missionsSubtitle').textContent = 'Completing missions…';
+  document.getElementById('missionsStatus').textContent  = '';
+  showView('viewMissions');
+
+  let earnedSoFar = 0;
+  const delays = [1500, 2200, 2900];
+
+  items.forEach(({ el, pts }, i) => {
+    setTimeout(() => {
+      el.querySelector('.mission-icon').textContent = '✅';
+      el.classList.add('mission-completed');
+      earnedSoFar += pts;
+      totalPoints += pts;
+      updateHUD();
+      spawnParticles(window.innerWidth / 2, window.innerHeight - 200, 8);
+      document.getElementById('missionsStatus').textContent = `+${earnedSoFar} pts earned`;
+    }, delays[i]);
+  });
+
+  // Transition to reward after all missions complete
+  setTimeout(() => {
+    const bonusPts = 100;
+    totalPoints += bonusPts;
+    updateHUD();
+    document.getElementById('rewardPts').textContent = '+' + (earnedSoFar + bonusPts) + ' pts';
+    document.getElementById('rewardSub').textContent = 'You discovered ' + activePoi.name + '!';
+    document.getElementById('voucherCode').textContent = Math.random().toString(36).substr(2, 6).toUpperCase();
+    showView('viewReward');
+    spawnParticles(window.innerWidth / 2, window.innerHeight / 2, 30);
+  }, 3800);
 }
 
 // ─────────────────────────────────────────────

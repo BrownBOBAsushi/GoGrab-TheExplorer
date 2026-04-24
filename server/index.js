@@ -348,7 +348,7 @@ async function initializeMcpSession() {
         protocolVersion: '2025-03-26',
         capabilities: {},
         clientInfo: {
-          name: 'GrabExplore local proxy',
+          name: 'GoGrab local proxy',
           version: '1.0.0'
         }
       }
@@ -433,7 +433,7 @@ async function createTripPlanWithGroq(userMessage, userLat, userLng, availablePO
       messages: [
         {
           role: 'system',
-          content: 'You are GrabExplore\'s trip planning assistant for tourists in Singapore. Always reply with valid JSON only.'
+          content: 'You are GoGrab\'s trip planning assistant for tourists in Singapore. Always reply with valid JSON only.'
         },
         {
           role: 'user',
@@ -609,7 +609,11 @@ app.get('/api/style.json', async (req, res) => {
     }
 
     const style = await response.json();
-    res.json(rewriteGrabMapsUrls(style));
+    const rewrittenStyle = rewriteGrabMapsUrls(style);
+    // Grab's glyph endpoint 404s — override with OpenMapTiles CDN which
+    // uses the same font-stack naming convention and is publicly accessible.
+    rewrittenStyle.glyphs = 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf';
+    res.json(rewrittenStyle);
   } catch (error) {
     console.error('Style proxy failed:', error.message);
     res.status(502).json({ error: 'style proxy failed' });
@@ -645,7 +649,7 @@ app.get('/api/tiles/:z/:x/:y', async (req, res) => {
   const { z, x, y } = req.params;
   const url = GRAB_KEY && GRABMAPS_TILE_URL
     ? `${GRABMAPS_TILE_URL}/${z}/${x}/${y}?key=${GRAB_KEY}`
-    : `https://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}@2x.png`;
+    : `https://a.basemaps.cartocdn.com/dark_matter/${z}/${x}/${y}@2x.png`;
 
   try {
     const response = await fetch(url);
@@ -838,9 +842,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/', (_req, res) => {
-  res.sendFile(path.resolve(__dirname, '..', 'GrabExplore.html'));
+  res.sendFile(path.resolve(__dirname, '..', 'GoGrab.html'));
 });
 
 app.listen(3000, () => {
-  console.log('GrabExplore proxy running on http://localhost:3000');
+  console.log('GoGrab proxy running on http://localhost:3000');
 });

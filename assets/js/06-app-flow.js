@@ -92,8 +92,8 @@ async function sendChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userMessage:   text,
-        userLat:       playerLat,
-        userLng:       playerLng,
+        userLat:       Number.isFinite(liveUserLat) ? liveUserLat : playerLat,
+        userLng:       Number.isFinite(liveUserLng) ? liveUserLng : playerLng,
         availablePOIs: POIS.map(p => ({ name: p.name, category: p.cat, description: p.description }))
       })
     });
@@ -107,6 +107,10 @@ async function sendChat() {
     if (data.recommendations) {
       const matched = highlightRecommendedPOIs(data.recommendations, POIS);
       applyHighlights(matched, 'ai');
+      // Pan to the first recommended POI so it's actually visible on screen
+      if (matched.length > 0 && map) {
+        map.easeTo({ center: [matched[0].lng, matched[0].lat], zoom: 16, duration: 800 });
+      }
     }
   } catch (e) {
     loading.textContent  = "Here are some local favourites near you!";
@@ -158,8 +162,13 @@ function applyHighlights(matchedPois, source = recommendationSource) {
 // ─────────────────────────────────────────────
 async function fetchNearbyPOIs() {
   try {
-    const currentCoords = getCurrentPlayerCoords();
-    const resp = await fetch(buildApiUrl(`/api/nearby?lat=${currentCoords.lat}&lng=${currentCoords.lng}&radius=1000`));
+    // Prefer real GPS for POI queries — getFreshGeolocation() does a live
+    // getCurrentPosition so we never query from the hardcoded start coords.
+    const freshGps = await getFreshGeolocation();
+    const coords = freshGps
+      || (Number.isFinite(liveUserLat) ? { lat: liveUserLat, lng: liveUserLng } : null)
+      || getCurrentPlayerCoords();
+    const resp = await fetch(buildApiUrl(`/api/nearby?lat=${coords.lat}&lng=${coords.lng}&radius=1000`));
     const data = await resp.json();
     if (data.pois && data.pois.length > 0) {
       replacePOIs(data.pois);

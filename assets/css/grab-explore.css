@@ -302,6 +302,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 /* ── POI MARKERS ── */
 .poi {
   position: relative;
+  width: 40px;   /* explicit — prevents block-level expansion inside maplibre marker wrapper */
+  height: 52px;  /* 40px face + 12px needle */
   z-index: 15; cursor: pointer; user-select: none;
   display: none; /* hidden until revealed */
   transition: opacity .3s;
@@ -310,13 +312,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 .poi-ring {
   width: 48px; height: 48px; border-radius: 50%;
   border: 2px solid rgba(0,177,79,.6);
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
+  position: absolute;
+  top: -4px; left: -4px; /* pixel offsets: (40px face - 48px ring) / 2 = -4px each side */
   animation: ringPulse 2s ease-in-out infinite;
 }
 @keyframes ringPulse {
-  0%,100% { opacity: .5; transform: translate(-50%,-50%) scale(1); }
-  50%      { opacity: 1;  transform: translate(-50%,-50%) scale(1.15); }
+  0%,100% { opacity: .5; transform: scale(1); }
+  50%      { opacity: 1;  transform: scale(1.15); }
 }
 .poi-face {
   width: 40px; height: 40px; border-radius: 50%;
@@ -569,26 +571,36 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 
 /* ── MISSIONS VIEW ── */
 #viewMissions { padding: 20px 20px 32px; }
-.missions-title { font-family: 'Syne', sans-serif; font-weight: 700; color: #fff; font-size: 18px; margin-bottom: 16px; }
+.missions-title { font-family: 'Syne', sans-serif; font-weight: 700; color: #fff; font-size: 20px; margin-bottom: 4px; }
+.missions-subtitle { font-size: 13px; color: rgba(255,255,255,.45); margin-bottom: 18px; font-family: 'DM Sans', sans-serif; }
 .mission-item {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px; background: rgba(255,255,255,.05);
-  border-radius: 12px; margin-bottom: 8px;
-  border: 1px solid rgba(255,255,255,.07); cursor: pointer;
-  transition: background .2s;
+  padding: 13px 14px; background: rgba(255,255,255,.05);
+  border-radius: 14px; margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,.07);
+  transition: background .3s, border-color .3s, transform .3s;
 }
-.mission-item:hover { background: rgba(255,255,255,.09); }
-.mission-icon { font-size: 22px; flex-shrink: 0; }
-.mission-desc { flex: 1; font-size: 14px; color: rgba(255,255,255,.8); }
+.mission-item.mission-completed {
+  background: rgba(0,177,79,.12);
+  border-color: rgba(0,177,79,.4);
+  animation: missionDone .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes missionDone {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.mission-item.mission-completed .mission-desc { color: #fff; }
+.mission-item.mission-completed .mission-pts  { color: var(--grab-green); }
+.mission-icon { font-size: 22px; flex-shrink: 0; width: 28px; text-align: center; }
+.mission-desc { flex: 1; font-size: 14px; color: rgba(255,255,255,.7); font-family: 'DM Sans', sans-serif; }
 .mission-pts { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--points-gold); font-weight: 600; }
-.missions-back {
-  width: 100%; margin-top: 12px; padding: 12px;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-  border-radius: 12px; color: rgba(255,255,255,.55);
-  font-family: 'DM Sans', sans-serif; font-size: 14px;
-  cursor: pointer; transition: background .2s;
+.mission-earning {
+  text-align: center; margin-top: 6px;
+  font-size: 12px; color: rgba(255,255,255,.4);
+  font-family: 'JetBrains Mono', monospace; min-height: 18px;
+  transition: color .3s;
 }
-.missions-back:hover { background: rgba(255,255,255,.1); }
 
 /* ── CHATBOT ── */
 #chatbot {

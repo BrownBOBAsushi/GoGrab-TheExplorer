@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>GrabExplore — Discover Singapore</title>
+<title>GoGrab — Discover Singapore</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
@@ -32,7 +32,7 @@
 </div>
 
 <!-- LOGO -->
-<div id="logo">Grab<span>Explore</span></div>
+<div id="logo">Go<span>Grab</span></div>
 
 <!-- MODE TOGGLE -->
 <div id="modeToggle">
@@ -50,7 +50,7 @@
 <!-- CHATBOT -->
 <div id="chatbot" class="minimized">
   <div id="chatHeader" onclick="if (chatMinimized) toggleChat()">
-    <span id="chatHeaderLabel"><span class="chat-bubble-icon">🤖</span>GrabExplore AI</span>
+    <span id="chatHeaderLabel"><span class="chat-bubble-icon">🤖</span>GoGrab AI</span>
     <span class="chat-bubble-icon" aria-hidden="true">🤖</span>
     <button id="chatMinBtn" onclick="toggleChat(event)" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1">—</button>
   </div>
@@ -157,9 +157,10 @@
     <!-- Missions View -->
     <div id="viewMissions" class="modal-view">
       <div class="m-handle"></div>
-      <div class="missions-title">Complete missions</div>
+      <div class="missions-title" id="missionsTitle">🎯 Missions Unlocked!</div>
+      <div class="missions-subtitle" id="missionsSubtitle">Complete all 3 to unlock your reward</div>
       <div id="missionList"></div>
-      <button class="missions-back" onclick="showView('viewReward')">← Back to reward</button>
+      <div class="mission-earning" id="missionsStatus"></div>
     </div>
 
     <!-- Reward View -->
@@ -182,7 +183,7 @@
 
 <!-- ONBOARD -->
 <div id="onboard">
-  <div class="ob-logo">Grab<span>Explore</span></div>
+  <div class="ob-logo">Go<span>Grab</span></div>
   <div class="ob-sub">Discover Singapore's hidden gems</div>
   <div class="ob-card">
     <h3>🗺️ Tourist Mode</h3>
