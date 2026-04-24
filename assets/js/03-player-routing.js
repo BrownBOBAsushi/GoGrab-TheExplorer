@@ -1,9 +1,8 @@
 function getPlayerScreenPosition() {
-  const currentCoords = getCurrentPlayerCoords();
-  if (!map || !Number.isFinite(currentCoords.lat) || !Number.isFinite(currentCoords.lng)) {
-    return getMapViewportCenter();
+  if (map && isMapBrowsing && Number.isFinite(playerLat) && Number.isFinite(playerLng)) {
+    return projectToViewport(playerLng, playerLat);
   }
-  return projectToViewport(currentCoords.lng, currentCoords.lat);
+  return getMapViewportCenter();
 }
 
 function getCurrentMapCenter() {
@@ -14,26 +13,8 @@ function getCurrentMapCenter() {
   return { lat: center.lat, lng: center.lng };
 }
 
-function ensurePlayerMarker() {
-  if (!map || playerMarker || typeof maplibregl === 'undefined' || !maplibregl.Marker) {
-    return;
-  }
-
-  const el = document.createElement('div');
-  el.className = 'player-marker';
-  playerMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
-    .setLngLat([START_LNG, START_LAT])
-    .addTo(map);
-}
-
 function updatePlayerVisualPosition() {
   const pos = getPlayerScreenPosition();
-  const currentCoords = getCurrentPlayerCoords();
-
-  ensurePlayerMarker();
-  if (playerMarker && Number.isFinite(currentCoords.lat) && Number.isFinite(currentCoords.lng)) {
-    playerMarker.setLngLat([currentCoords.lng, currentCoords.lat]);
-  }
 
   const player = document.getElementById('player');
   if (player) {

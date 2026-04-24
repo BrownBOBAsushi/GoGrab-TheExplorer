@@ -3,6 +3,8 @@
 const START_LNG = 103.8268;
 const START_LAT = 1.285;
 const GRAB_STYLE_THEME = 'basic';
+// Use raw MapLibre with the proxied Grab style by default. This avoids the
+// hosted widget mounting a second draggable visual layer above the map.
 const PREFER_GRABMAPS_LIBRARY = false;
 const GRABMAPS_LIBRARY_URL = 'https://maps.grab.com/developer/assets/js/grabmaps.es.js';
 const API_BASE = window.location.origin.startsWith('http') && window.location.port === '3000'
@@ -81,6 +83,16 @@ function getMapViewportCenter() {
 }
 
 function getCurrentPlayerCoords() {
+  // Keep gameplay tied to the simulated avatar position so Demo Jump and
+  // proximity checks still work after GPS has been granted.
+  if (Number.isFinite(playerLat) && Number.isFinite(playerLng)) {
+    return {
+      lat: playerLat,
+      lng: playerLng,
+      source: 'player'
+    };
+  }
+
   if (Number.isFinite(liveUserLat) && Number.isFinite(liveUserLng)) {
     return {
       lat: liveUserLat,
@@ -90,9 +102,9 @@ function getCurrentPlayerCoords() {
   }
 
   return {
-    lat: playerLat,
-    lng: playerLng,
-    source: 'player'
+    lat: START_LAT,
+    lng: START_LNG,
+    source: 'default'
   };
 }
 

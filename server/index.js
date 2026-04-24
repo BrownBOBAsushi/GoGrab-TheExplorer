@@ -696,7 +696,7 @@ app.get('/api/nearby', async (req, res) => {
       if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab-mcp' });
       }
-      console.warn('Grab Maps MCP returned no usable nearby food POIs');
+      console.warn('Grab Maps MCP returned no usable nearby food POIs, using mock POIs');
     } else if (GRAB_KEY) {
       const nearby = await fetchNearbyFromPartnerApi(lat, lng, radiusKm);
       const livePois = filterRelevantNearbyPois(
@@ -708,13 +708,13 @@ app.get('/api/nearby', async (req, res) => {
       if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab' });
       }
-      console.warn('Grab partner nearby returned no usable nearby food POIs');
+      console.warn('Grab partner nearby returned no usable nearby food POIs, using mock POIs');
     }
   } catch (error) {
     console.error('Nearby API failed:', error.message);
   }
 
-  return res.json({ pois: [], source: 'empty' });
+  return res.json({ pois: MOCK_POIS, source: 'mock' });
 });
 
 app.get('/api/reviews', (req, res) => {
@@ -791,7 +791,7 @@ app.post('/api/chat', async (req, res) => {
   const { userMessage, userLat, userLng, availablePOIs } = req.body;
   const safeAvailablePois = Array.isArray(availablePOIs) && availablePOIs.length > 0
     ? availablePOIs
-    : [];
+    : MOCK_POIS;
 
   if (!userMessage) {
     return res.status(400).json({ error: 'userMessage required' });

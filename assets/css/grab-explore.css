@@ -19,14 +19,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 
 /* ── PLAYER SPRITE ── */
 #player {
-  display: none;
-}
-.player-marker {
-  position: relative;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
   width: 32px; height: 32px;
   background: var(--grab-green);
   border: 3px solid #fff;
   border-radius: 50%;
+  z-index: 20;
   box-shadow: 0 0 0 4px var(--grab-green-glow);
   animation: playerPulse 2s ease-in-out infinite;
   pointer-events: none;

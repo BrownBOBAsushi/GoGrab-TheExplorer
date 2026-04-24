@@ -12,18 +12,15 @@ async function initMap() {
 
   if (!map) {
     let style = getFallbackMapStyle();
-    if (PREFER_GRABMAPS_LIBRARY) {
-      try {
-        const response = await fetch(buildApiUrl(`/api/style.json?theme=${encodeURIComponent(GRAB_STYLE_THEME)}`));
-        if (!response.ok) {
-          throw new Error(`style request failed with ${response.status}`);
-        }
-        style = await response.json();
-      } catch (styleError) {
-        console.warn('Grab style load failed, using fallback raster style', styleError);
+    try {
+      const response = await fetch(buildApiUrl(`/api/style.json?theme=${encodeURIComponent(GRAB_STYLE_THEME)}`));
+      if (!response.ok) {
+        throw new Error(`style request failed with ${response.status}`);
       }
-    } else {
-      console.log('Using fallback raster style while GrabMaps assets are unavailable');
+      style = await response.json();
+      console.log('Using proxied GrabMaps style with raw MapLibre');
+    } catch (styleError) {
+      console.warn('Grab style load failed, using fallback raster style', styleError);
     }
 
     map = new maplibregl.Map({
@@ -46,7 +43,6 @@ async function initMap() {
   const handleMapReady = () => {
     mapReady = true;
     console.log('Map loaded');
-    ensurePlayerMarker();
     if (Number.isFinite(playerLat) && Number.isFinite(playerLng)) {
       syncPlayerToMap({ animate: false, force: true, seedReveal: hasCenteredOnInitialGps });
     } else {

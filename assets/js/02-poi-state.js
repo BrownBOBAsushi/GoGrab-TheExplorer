@@ -1,9 +1,7 @@
 //  STATE
 // ─────────────────────────────────────────────
-POIS = [];
 let map           = null;
 let mapApp        = null;
-let playerMarker  = null;
 let playerLat     = START_LAT;
 let playerLng     = START_LNG;
 let appMode       = 'tourist';    // 'tourist' | 'explore'
