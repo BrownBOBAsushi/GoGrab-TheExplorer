@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(express.static(path.resolve(__dirname, '..')));
 
 const GRAB_KEY = cleanEnv(process.env.GRABMAPS_API_KEY);
+const GRABMAPS_BASE_URL = cleanEnv(process.env.GRABMAPS_BASE_URL) || 'https://maps.grab.com';
 const GRABMAPS_MCP_TOKEN = cleanEnv(process.env.GRABMAPS_MCP_TOKEN);
 const GRABMAPS_MCP_URL = cleanEnv(process.env.GRABMAPS_MCP_URL) || 'https://maps.grab.com/api/v1/mcp';
 const GRABMAPS_TILE_URL = cleanEnv(process.env.GRABMAPS_TILE_URL) || null;
@@ -21,12 +22,12 @@ const GROQ_MODEL = cleanEnv(process.env.GROQ_MODEL) || 'llama-3.3-70b-versatile'
 const MOCK_POIS = [
   {
     id: 'poi_1',
-    name: 'Tiong Bahru Galicier Pastry',
+    name: 'Media Link Bakery Stop',
     category: 'Traditional Bakery',
     lat: 1.2847,
     lng: 103.8278,
     distance: '420m',
-    description: 'Old-school Singaporean bakery known for wife cakes and local pastries. Open since 1958. No Google reviews worth trusting.',
+    description: 'Demo bakery stop near the One-North start point with pastries and quick breakfast bites.',
     reviewSource: 'Curated demo notes',
     reviewSummary: 'Best for old-school pastry fans who want heritage over trendiness.',
     reviews: [
@@ -37,12 +38,12 @@ const MOCK_POIS = [
   },
   {
     id: 'poi_2',
-    name: 'Lim Chee Guan Tiong Bahru',
+    name: 'Portsdown Jerky House',
     category: 'Bak Kwa',
     lat: 1.2856,
     lng: 103.8271,
     distance: '510m',
-    description: 'Legendary bak kwa (BBQ pork jerky) shop. Queue forms before CNY but locals know to come off-peak.',
+    description: 'Demo savory snack stop near the player start point with smoky takeaway bites.',
     reviewSource: 'Curated demo notes',
     reviewSummary: 'Best if the user wants a bold, savory gift stop with serious local flavor.',
     reviews: [
@@ -53,12 +54,12 @@ const MOCK_POIS = [
   },
   {
     id: 'poi_3',
-    name: 'Ah Chiang Porridge',
+    name: 'Mediapolis Porridge Corner',
     category: 'Local Porridge',
     lat: 1.2832,
     lng: 103.8263,
     distance: '680m',
-    description: 'No-frills congee stall that opens at 6am. Regulars order without a menu. Cash only.',
+    description: 'Demo comfort-food stop near One-North for a warm porridge-style meal.',
     reviewSource: 'Curated demo notes',
     reviewSummary: 'Best for comfort-food seekers who care more about flavor depth than visuals.',
     reviews: [
@@ -69,12 +70,12 @@ const MOCK_POIS = [
   },
   {
     id: 'poi_4',
-    name: 'Tiong Bahru Market Chwee Kueh',
+    name: 'Ayer Rajah Hawker Bites',
     category: 'Hawker',
     lat: 1.2862,
     lng: 103.8269,
     distance: '390m',
-    description: 'Chwee kueh that Tiong Bahru residents have eaten for 40 years. Closes by 11am.',
+    description: 'Demo hawker-style stop near the start point for quick local bites.',
     reviewSource: 'Curated demo notes',
     reviewSummary: 'Best for tourists who want a hawker classic and a more iconic local-food moment.',
     reviews: [
@@ -85,12 +86,12 @@ const MOCK_POIS = [
   },
   {
     id: 'poi_5',
-    name: 'Qi Ji Tiong Bahru Plaza',
+    name: 'One-North Snack Stop',
     category: 'Local Snacks',
     lat: 1.2874,
     lng: 103.8265,
     distance: '820m',
-    description: 'Muah chee and local snacks. Often overlooked next to larger food court chains.',
+    description: 'Demo local snacks stop near the player start point for lighter grab-and-go food.',
     reviewSource: 'Curated demo notes',
     reviewSummary: 'Best for quick bites and lighter snacking when the user wants variety over one heavy dish.',
     reviews: [
@@ -229,6 +230,34 @@ function normalizeLivePois(places, originLat, originLng) {
     .filter((poi) => Number.isFinite(poi.lat) && Number.isFinite(poi.lng));
 }
 
+function looksFoodRelated(poi) {
+  const haystack = `${poi.name || ''} ${poi.category || ''} ${poi.description || ''}`.toLowerCase();
+  const foodKeywords = [
+    'food', 'eat', 'restaurant', 'cafe', 'coffee', 'bakery', 'pastry', 'dessert',
+    'hawker', 'snack', 'porridge', 'congee', 'meal', 'drink', 'tea', 'juice',
+    'bak kwa', 'bbq', 'noodle', 'rice', 'chicken', 'seafood', 'bar', 'pub'
+  ];
+  return foodKeywords.some((keyword) => haystack.includes(keyword));
+}
+
+function filterRelevantNearbyPois(pois, originLat, originLng, radiusMeters) {
+  const paddedRadius = Math.max(radiusMeters * 1.5, 1200);
+
+  return pois
+    .map((poi) => {
+      const distanceMeters = haversineMeters(originLat, originLng, poi.lat, poi.lng);
+      return {
+        ...poi,
+        distance: formatDistanceLabel(distanceMeters),
+        distanceMeters
+      };
+    })
+    .filter((poi) => poi.distanceMeters <= paddedRadius)
+    .filter((poi) => looksFoodRelated(poi))
+    .sort((a, b) => a.distanceMeters - b.distanceMeters)
+    .map(({ distanceMeters, ...poi }) => poi);
+}
+
 function dedupePois(pois) {
   const seen = new Set();
   return pois.filter((poi) => {
@@ -251,6 +280,35 @@ function fallbackDirections(originLat, originLng, destLat, destLng) {
     distance: 'Walking distance',
     duration: 'A few minutes'
   };
+}
+
+function buildGrabAuthHeaders(extraHeaders = {}) {
+  if (!GRAB_KEY) {
+    throw new Error('Grab Maps API key is not configured');
+  }
+
+  return {
+    Authorization: `Bearer ${GRAB_KEY}`,
+    ...extraHeaders
+  };
+}
+
+function rewriteGrabMapsUrls(value) {
+  if (Array.isArray(value)) {
+    return value.map(rewriteGrabMapsUrls);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [key, rewriteGrabMapsUrls(nestedValue)])
+    );
+  }
+
+  if (typeof value === 'string' && value.startsWith(`${GRABMAPS_BASE_URL}/`)) {
+    return value.replace(`${GRABMAPS_BASE_URL}/`, '/api/grabmaps/');
+  }
+
+  return value;
 }
 
 function parseSseJson(content) {
@@ -491,6 +549,57 @@ async function fetchDirectionsFromPartnerApi(originLat, originLng, destLat, dest
   );
 }
 
+app.get('/api/style.json', async (req, res) => {
+  const theme = String(req.query.theme || 'basic').trim() || 'basic';
+
+  try {
+    const response = await fetch(
+      `${GRABMAPS_BASE_URL}/api/style.json?theme=${encodeURIComponent(theme)}`,
+      {
+        headers: buildGrabAuthHeaders({
+          Accept: 'application/json'
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`style proxy failed with ${response.status}: ${text}`);
+    }
+
+    const style = await response.json();
+    res.json(rewriteGrabMapsUrls(style));
+  } catch (error) {
+    console.error('Style proxy failed:', error.message);
+    res.status(502).json({ error: 'style proxy failed' });
+  }
+});
+
+app.get('/api/grabmaps/*', async (req, res) => {
+  const tail = req.params[0];
+  const query = req.originalUrl.split('?')[1];
+  const upstreamUrl = `${GRABMAPS_BASE_URL}/${tail}${query ? `?${query}` : ''}`;
+
+  try {
+    const response = await fetch(upstreamUrl, {
+      headers: buildGrabAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`grabmaps proxy failed with ${response.status}: ${text}`);
+    }
+
+    const buffer = await response.buffer();
+    res.set('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
+    res.set('Cache-Control', response.headers.get('cache-control') || 'public, max-age=3600');
+    res.send(buffer);
+  } catch (error) {
+    console.error('GrabMaps asset proxy failed:', error.message);
+    res.status(502).json({ error: 'grabmaps asset proxy failed' });
+  }
+});
+
 app.get('/api/tiles/:z/:x/:y', async (req, res) => {
   const { z, x, y } = req.params;
   const url = GRAB_KEY && GRABMAPS_TILE_URL
@@ -527,18 +636,28 @@ app.get('/api/nearby', async (req, res) => {
         radius_km: radiusKm,
         limit: 10
       });
-      const livePois = normalizeLivePois(nearby.places || [], lat, lng);
-      if (livePois.length >= 3) {
+      const livePois = filterRelevantNearbyPois(
+        normalizeLivePois(nearby.places || [], lat, lng),
+        lat,
+        lng,
+        radiusMeters
+      );
+      if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab-mcp' });
       }
-      console.warn('Grab Maps MCP nearby returned too few results, using mock POIs');
+      console.warn('Grab Maps MCP nearby returned no usable nearby food POIs, using mock POIs');
     } else if (GRAB_KEY) {
       const nearby = await fetchNearbyFromPartnerApi(lat, lng, radiusKm);
-      const livePois = normalizeLivePois(nearby.places || [], lat, lng);
-      if (livePois.length >= 3) {
+      const livePois = filterRelevantNearbyPois(
+        normalizeLivePois(nearby.places || [], lat, lng),
+        lat,
+        lng,
+        radiusMeters
+      );
+      if (livePois.length > 0) {
         return res.json({ pois: livePois.slice(0, 5), source: 'grab' });
       }
-      console.warn('Grab partner nearby returned too few results, using mock POIs');
+      console.warn('Grab partner nearby returned no usable nearby food POIs, using mock POIs');
     }
   } catch (error) {
     console.error('Nearby API failed:', error.message);

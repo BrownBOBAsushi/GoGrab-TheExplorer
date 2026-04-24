@@ -97,6 +97,102 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 .mode-switch input:checked + .mode-slider { background: var(--grab-green); }
 .mode-switch input:checked + .mode-slider:before { transform: translateX(16px); }
 
+/* ── GUIDED DISCOVERY TRAY ── */
+#recommendationTray {
+  position: fixed; left: 320px; right: 16px; bottom: 24px; z-index: 28;
+  padding: 14px 14px 12px;
+  border-radius: 22px; border: 1px solid rgba(255,255,255,.14);
+  background: rgba(6,16,11,.8); backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgba(0,0,0,.28);
+}
+#recommendationTray.is-hidden { display: none; }
+.recommendation-tray-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 12px;
+}
+.recommendation-eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: rgba(0,177,79,.9); text-transform: uppercase; letter-spacing: .08em;
+}
+.recommendation-title {
+  margin-top: 4px; color: #fff; font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 700; letter-spacing: -.03em;
+}
+.recommendation-subtitle {
+  font-size: 12px; color: rgba(255,255,255,.52);
+}
+#recommendationCards {
+  display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.recommendation-card {
+  min-width: 220px; max-width: 240px; padding: 14px;
+  border-radius: 18px; border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06);
+  color: #fff; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s, background .18s;
+  appearance: none; text-align: left; font-family: 'DM Sans', sans-serif;
+}
+.recommendation-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.08);
+}
+.recommendation-card.is-active {
+  border-color: rgba(0,177,79,.7);
+  background: linear-gradient(180deg, rgba(0,177,79,.18), rgba(255,255,255,.08));
+  box-shadow: 0 0 0 1px rgba(0,177,79,.24), 0 16px 32px rgba(0,177,79,.16);
+}
+.recommendation-card.is-spun {
+  opacity: .55;
+  border-style: dashed;
+}
+.recommendation-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px;
+}
+.recommendation-icon {
+  width: 42px; height: 42px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,177,79,.16); border: 1px solid rgba(0,177,79,.28);
+  font-size: 20px;
+}
+.recommendation-distance {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: rgba(255,255,255,.6);
+}
+.recommendation-name {
+  margin-top: 10px; font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3;
+}
+.recommendation-cat {
+  margin-top: 4px; font-size: 12px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .05em;
+}
+.recommendation-tags {
+  margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+.recommendation-tag {
+  padding: 5px 10px; border-radius: 999px; font-size: 11px;
+  color: rgba(255,255,255,.72); background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.recommendation-empty {
+  padding: 18px 6px 8px; color: rgba(255,255,255,.56); font-size: 13px;
+}
+#recenterBtn {
+  position: fixed; right: 16px; bottom: 190px; z-index: 29;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 16px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(6,16,11,.82); backdrop-filter: blur(12px);
+  color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: transform .18s, background .18s, border-color .18s;
+}
+#recenterBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(9,23,16,.9);
+  border-color: rgba(0,177,79,.45);
+}
+#recenterBtn.is-hidden { display: none; }
+
 /* ── JOYSTICK ── */
 #jsCont {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -184,6 +280,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 @keyframes poiGoldPulse {
   0%,100% { box-shadow: 0 0 0 6px rgba(245,158,11,.35), 0 4px 20px rgba(245,158,11,.5); }
   50%      { box-shadow: 0 0 0 10px rgba(245,158,11,.5), 0 4px 28px rgba(245,158,11,.7); }
+}
+.poi.selected .poi-face {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 3px rgba(255,255,255,.75), 0 0 0 8px rgba(0,177,79,.3), 0 10px 28px rgba(0,0,0,.35);
+}
+.poi.selected .poi-ring {
+  border-color: rgba(255,255,255,.82);
+  animation-duration: 1.3s;
+}
+.poi.highlighted.selected .poi-face {
+  box-shadow: 0 0 0 3px rgba(255,255,255,.8), 0 0 0 9px rgba(245,158,11,.4), 0 10px 32px rgba(245,158,11,.34);
 }
 
 /* ── POI OVERLAY (sits above map, below fog) ── */
@@ -563,6 +670,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
   </div>
 </div>
 
+<!-- GUIDED DISCOVERY -->
+<div id="recommendationTray">
+  <div class="recommendation-tray-top">
+    <div>
+      <div class="recommendation-eyebrow" id="recommendationEyebrow">Nearby for you</div>
+      <div class="recommendation-title" id="recommendationTitle">3 good stops around you</div>
+    </div>
+    <div class="recommendation-subtitle" id="recommendationSubtitle">Tap a card to inspect the stop</div>
+  </div>
+  <div id="recommendationCards"></div>
+</div>
+
+<button id="recenterBtn" onclick="recenterToPlayer()">Recenter</button>
+
 <!-- MODAL -->
 <div id="modal">
   <div id="modalBox">
@@ -654,7 +775,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
         <div class="voucher-desc">Your next GrabFood order</div>
         <div class="voucher-code">GRABEXP-<span id="voucherCode">XXXXXX</span></div>
       </div>
-      <button class="reward-cta" onclick="closeModal()">EXPLORE MORE STOPS</button>
+      <button class="reward-cta" id="rewardContinueBtn" onclick="continueAfterReward()">See next nearby stop</button>
     </div>
 
   </div>
@@ -681,6 +802,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-d
 // ─────────────────────────────────────────────
 const START_LNG = 103.8268;
 const START_LAT = 1.285;
+const GRAB_STYLE_THEME = 'basic';
+const GRABMAPS_LIBRARY_URL = 'https://maps.grab.com/developer/assets/js/grabmaps.es.js';
 const API_BASE = window.location.origin.startsWith('http') && window.location.port === '3000'
   ? window.location.origin
   : 'http://localhost:3000';
@@ -696,29 +819,165 @@ function getDegreesPerPixel(lat, zoom) {
   return metersPerPixel / 111320;
 }
 
+function getFallbackMapStyle() {
+  return {
+    version: 8,
+    sources: {
+      'grab-tiles': {
+        type: 'raster',
+        tiles: ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'],
+        tileSize: 256,
+        attribution: '© GrabMaps | © OpenStreetMap contributors'
+      }
+    },
+    layers: [{
+      id: 'grab-tiles',
+      type: 'raster',
+      source: 'grab-tiles'
+    }]
+  };
+}
+
+function getMapViewportRect() {
+  const container = map && typeof map.getContainer === 'function'
+    ? map.getContainer()
+    : null;
+
+  if (container && typeof container.getBoundingClientRect === 'function') {
+    return container.getBoundingClientRect();
+  }
+
+  return {
+    left: 0,
+    top: 0,
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+}
+
+function projectToViewport(lng, lat) {
+  if (!map) {
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+  }
+
+  const projected = map.project([lng, lat]);
+  const rect = getMapViewportRect();
+  return {
+    x: rect.left + projected.x,
+    y: rect.top + projected.y
+  };
+}
+
+function getMapViewportCenter() {
+  const rect = getMapViewportRect();
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2
+  };
+}
+
+function resolveRawMap(candidate) {
+  if (!candidate) return null;
+  if (
+    typeof candidate.on === 'function' &&
+    typeof candidate.project === 'function' &&
+    typeof candidate.addLayer === 'function'
+  ) {
+    return candidate;
+  }
+
+  const accessors = ['map', 'mapInstance', 'rawMap', 'maplibreMap', 'instance', '_map'];
+  for (const key of accessors) {
+    if (!candidate[key]) continue;
+    const resolved = resolveRawMap(candidate[key]);
+    if (resolved) return resolved;
+  }
+
+  if (typeof candidate.getMap === 'function') {
+    try {
+      const resolved = resolveRawMap(candidate.getMap());
+      if (resolved) return resolved;
+    } catch (_error) {
+      // Ignore and continue.
+    }
+  }
+
+  return null;
+}
+
+async function loadGrabMapsConstructor() {
+  if (typeof window.GrabMapsLib === 'function') {
+    return window.GrabMapsLib;
+  }
+
+  const mod = await import(GRABMAPS_LIBRARY_URL);
+  const loadedCtor = mod?.GrabMapsLib || mod?.default || window.GrabMapsLib;
+  if (typeof loadedCtor !== 'function') {
+    throw new Error('GrabMapsLib constructor was not found after loading the hosted bundle');
+  }
+
+  return loadedCtor;
+}
+
+async function buildGrabMapsLibraryMap() {
+  const GrabMapsLib = await loadGrabMapsConstructor();
+  mapApp = new GrabMapsLib({
+    container: 'map',
+    apiKey: 'proxy',
+    baseUrl: API_BASE,
+    lat: START_LAT,
+    lng: START_LNG,
+    zoom: 16,
+    interactive: true,
+    navigation: true,
+    attribution: true,
+    buildings: true,
+    labels: true,
+    showSearchBar: false,
+    showWaypointsModal: false,
+    showContextMenu: false,
+    showLayersMenu: false,
+    routing: {
+      enabled: false,
+      defaultColor: '#00B14F',
+      defaultWidth: 4
+    }
+  });
+
+  const rawMap = resolveRawMap(mapApp);
+  if (!rawMap) {
+    throw new Error('GrabMapsLib initialized, but the underlying map instance could not be resolved');
+  }
+
+  return rawMap;
+}
+
 // ─────────────────────────────────────────────
 //  POI DATA
 // ─────────────────────────────────────────────
 let POIS = [
-  { id:'poi_1', name:'Tiong Bahru Galicier Pastry', cat:'Traditional Bakery', icon:'🥐',
+  { id:'poi_1', name:'Media Link Bakery Stop', cat:'Traditional Bakery', icon:'🥐',
     lat:1.2847, lng:103.8278, distance:'420m',
-    description:'Old-school Singaporean bakery known for wife cakes and local pastries. Open since 1958.',
+    description:'Demo bakery stop near the One-North start point with pastries and quick breakfast bites.',
     missions:[{i:'📸',d:'Take a photo here',p:50},{i:'⭐',d:'Leave a food review',p:30},{i:'📍',d:'Check in',p:20}] },
-  { id:'poi_2', name:'Lim Chee Guan Tiong Bahru', cat:'Bak Kwa', icon:'🥩',
+  { id:'poi_2', name:'Portsdown Jerky House', cat:'Bak Kwa', icon:'🥩',
     lat:1.2856, lng:103.8271, distance:'510m',
-    description:'Legendary bak kwa (BBQ pork jerky) shop. Queue forms before CNY but locals know to come off-peak.',
+    description:'Demo savory snack stop near the player start point with smoky takeaway bites.',
     missions:[{i:'📸',d:'Take a photo here',p:50},{i:'⭐',d:'Leave a food review',p:30},{i:'📍',d:'Check in',p:20}] },
-  { id:'poi_3', name:'Ah Chiang Porridge', cat:'Local Porridge', icon:'🍚',
+  { id:'poi_3', name:'Mediapolis Porridge Corner', cat:'Local Porridge', icon:'🍚',
     lat:1.2832, lng:103.8263, distance:'680m',
-    description:'No-frills congee stall that opens at 6am. Regulars order without a menu. Cash only.',
+    description:'Demo comfort-food stop near One-North for a warm porridge-style meal.',
     missions:[{i:'📸',d:'Snap the congee',p:40},{i:'⭐',d:'Rate the congee',p:25},{i:'📍',d:'Check in',p:20}] },
-  { id:'poi_4', name:'Tiong Bahru Market Chwee Kueh', cat:'Hawker', icon:'🍡',
+  { id:'poi_4', name:'Ayer Rajah Hawker Bites', cat:'Hawker', icon:'🍡',
     lat:1.2862, lng:103.8269, distance:'390m',
-    description:'Chwee kueh that Tiong Bahru residents have eaten for 40 years. Closes by 11am.',
+    description:'Demo hawker-style stop near the start point for quick local bites.',
     missions:[{i:'📸',d:'Take a photo here',p:50},{i:'⭐',d:'Leave a food review',p:30},{i:'📍',d:'Check in',p:20}] },
-  { id:'poi_5', name:'Qi Ji Tiong Bahru Plaza', cat:'Local Snacks', icon:'🍢',
+  { id:'poi_5', name:'One-North Snack Stop', cat:'Local Snacks', icon:'🍢',
     lat:1.2874, lng:103.8265, distance:'820m',
-    description:'Muah chee and local snacks. Often overlooked next to larger food court chains.',
+    description:'Demo local snacks stop near the player start point for lighter grab-and-go food.',
     missions:[{i:'📸',d:'Take a photo here',p:50},{i:'⭐',d:'Leave a food review',p:30},{i:'📍',d:'Check in',p:20}] },
 ];
 
@@ -726,6 +985,7 @@ let POIS = [
 //  STATE
 // ─────────────────────────────────────────────
 let map           = null;
+let mapApp        = null;
 let playerLat     = START_LAT;
 let playerLng     = START_LNG;
 let appMode       = 'tourist';    // 'tourist' | 'explore'
@@ -744,6 +1004,9 @@ let isMapBrowsing = false;
 let activeRouteOriginLabel = '';
 
 let poiState      = {};           // { poiId: { revealed, spun, el } }
+let recommendedPois = [];
+let selectedPoiId = null;
+let recommendationSource = 'nearby';
 
 // Fog-of-war state
 let fogCanvas, fogCtx;
@@ -843,10 +1106,218 @@ function replacePOIs(nextPois) {
   buildPOILayer();
 
   if (appMode === 'tourist') {
-    revealAllPOIs();
+    refreshTouristPOIs();
   }
 
   updatePOIPositions();
+}
+
+function updatePoiDistances(referenceLat = playerLat, referenceLng = playerLng) {
+  for (const poi of POIS) {
+    const nextDistance = formatDistance(
+      distanceBetween(referenceLat, referenceLng, poi.lat, poi.lng)
+    );
+    if (nextDistance) {
+      poi.distance = nextDistance;
+    }
+  }
+}
+
+function getPoiById(poiId) {
+  return POIS.find((poi) => poi.id === poiId) || null;
+}
+
+function isPoiSpun(poi) {
+  return Boolean(poi && poiState[poi.id]?.spun);
+}
+
+function getNearestPois(limit = 3, referenceLat = playerLat, referenceLng = playerLng) {
+  return [...POIS]
+    .sort((a, b) =>
+      distanceBetween(referenceLat, referenceLng, a.lat, a.lng) -
+      distanceBetween(referenceLat, referenceLng, b.lat, b.lng)
+    )
+    .slice(0, limit);
+}
+
+function getReasonTagsForPoi(poi) {
+  const tags = [];
+  const walkMinutes = Math.max(2, Math.round(distanceBetween(playerLat, playerLng, poi.lat, poi.lng) / 80));
+  tags.push(`${walkMinutes} min away`);
+
+  const label = `${poi.cat || ''} ${poi.reviewSummary || ''}`.toLowerCase();
+  if (label.includes('bakery') || label.includes('pastry')) {
+    tags.push('Best for pastries');
+  } else if (label.includes('bak kwa') || label.includes('savory')) {
+    tags.push('Savory souvenir stop');
+  } else if (label.includes('porridge') || label.includes('comfort')) {
+    tags.push('Comfort breakfast');
+  } else if (label.includes('hawker')) {
+    tags.push('Hawker classic');
+  } else if (label.includes('snack') || label.includes('dessert')) {
+    tags.push('Quick local bite');
+  } else if (label.includes('coffee') || label.includes('cafe')) {
+    tags.push('Coffee break');
+  } else {
+    tags.push('Local discovery');
+  }
+
+  return tags.slice(0, 2);
+}
+
+function getRecommendedPoiObjects() {
+  return recommendedPois
+    .map((poi) => getPoiById(poi.id) || poi)
+    .filter(Boolean);
+}
+
+function getNextRecommendedPoi(excludedPoiId = selectedPoiId) {
+  const remaining = getRecommendedPoiObjects().filter(
+    (poi) => !isPoiSpun(poi) && poi.id !== excludedPoiId
+  );
+  return remaining[0] || null;
+}
+
+function updateRewardContinuation() {
+  const rewardBtn = document.getElementById('rewardContinueBtn');
+  if (!rewardBtn) return;
+  rewardBtn.textContent = getNextRecommendedPoi(activePoi?.id)
+    ? 'See next nearby stop'
+    : 'Back to nearby stops';
+}
+
+function updateTouristChrome() {
+  const tray = document.getElementById('recommendationTray');
+  const recenterBtn = document.getElementById('recenterBtn');
+  const isTourist = appMode === 'tourist';
+
+  if (tray) tray.classList.toggle('is-hidden', !isTourist);
+  if (recenterBtn) recenterBtn.classList.toggle('is-hidden', !isTourist);
+}
+
+function updatePOIVisualStates() {
+  const recommendedIds = new Set(getRecommendedPoiObjects().map((poi) => poi.id));
+
+  for (const poi of POIS) {
+    const state = poiState[poi.id];
+    if (!state) continue;
+    state.el.classList.toggle('highlighted', recommendedIds.has(poi.id) && !state.spun);
+    state.el.classList.toggle('selected', selectedPoiId === poi.id);
+  }
+}
+
+function renderRecommendationTray() {
+  const tray = document.getElementById('recommendationTray');
+  const cards = document.getElementById('recommendationCards');
+  const eyebrow = document.getElementById('recommendationEyebrow');
+  const title = document.getElementById('recommendationTitle');
+  const subtitle = document.getElementById('recommendationSubtitle');
+
+  if (!tray || !cards || !eyebrow || !title || !subtitle) return;
+
+  updateTouristChrome();
+  if (appMode !== 'tourist') return;
+
+  const trayPois = getRecommendedPoiObjects().filter((poi) => !isPoiSpun(poi)).slice(0, 3);
+  eyebrow.textContent = recommendationSource === 'ai' ? 'Picked for your vibe' : 'Nearby for you';
+  title.textContent = trayPois.length > 0
+    ? `${trayPois.length} good stop${trayPois.length === 1 ? '' : 's'} around you`
+    : 'No nearby stops yet';
+  subtitle.textContent = recommendationSource === 'ai'
+    ? 'AI matched these stops to what you asked for'
+    : 'Tap a card to inspect the stop';
+
+  if (trayPois.length === 0) {
+    cards.innerHTML = '<div class="recommendation-empty">Try asking the AI for another vibe, or move around to refresh nearby stops.</div>';
+    return;
+  }
+
+  cards.innerHTML = trayPois.map((poi) => `
+    <button class="recommendation-card${selectedPoiId === poi.id ? ' is-active' : ''}${isPoiSpun(poi) ? ' is-spun' : ''}" data-poi-id="${poi.id}" type="button">
+      <div class="recommendation-card-top">
+        <div class="recommendation-icon">${poi.icon || '📍'}</div>
+        <div class="recommendation-distance">${poi.distance}</div>
+      </div>
+      <div class="recommendation-name">${poi.name}</div>
+      <div class="recommendation-cat">${poi.cat}</div>
+      <div class="recommendation-tags">
+        ${getReasonTagsForPoi(poi).map((tag) => `<span class="recommendation-tag">${tag}</span>`).join('')}
+      </div>
+    </button>
+  `).join('');
+
+  cards.querySelectorAll('[data-poi-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const poi = getPoiById(card.getAttribute('data-poi-id'));
+      if (poi) {
+        focusPoi(poi, { openModal: true, recenterToPoi: true });
+      }
+    });
+  });
+}
+
+function setSelectedPoi(poiOrId) {
+  const poi = typeof poiOrId === 'string' ? getPoiById(poiOrId) : poiOrId;
+  selectedPoiId = poi?.id || null;
+  updatePOIVisualStates();
+  renderRecommendationTray();
+}
+
+function setRecommendedPois(nextPois, source = 'nearby') {
+  recommendedPois = nextPois
+    .map((poi) => getPoiById(poi.id) || poi)
+    .filter(Boolean)
+    .filter((poi, index, list) => list.findIndex((candidate) => candidate.id === poi.id) === index)
+    .slice(0, 3);
+  recommendationSource = source;
+
+  const selectedPoi = getPoiById(selectedPoiId);
+  const selectedStillRelevant = selectedPoi && recommendedPois.some((poi) => poi.id === selectedPoi.id) && !isPoiSpun(selectedPoi);
+  if (!selectedStillRelevant) {
+    const nextSelected = recommendedPois.find((poi) => !isPoiSpun(poi)) || recommendedPois[0] || null;
+    selectedPoiId = nextSelected?.id || null;
+  }
+
+  updatePOIVisualStates();
+  renderRecommendationTray();
+  updateRewardContinuation();
+}
+
+function refreshTouristPOIs() {
+  if (appMode !== 'tourist') return;
+  updatePoiDistances();
+  revealAllPOIs();
+  updatePOIPositions();
+  const preservedAiPois = recommendationSource === 'ai' && recommendedPois.length > 0
+    ? getRecommendedPoiObjects()
+    : [];
+  const nextRecommended = preservedAiPois.length > 0
+    ? preservedAiPois
+    : getNearestPois(Math.min(3, POIS.length));
+  setRecommendedPois(nextRecommended, preservedAiPois.length > 0 ? 'ai' : 'nearby');
+}
+
+function focusPoi(poi, options = {}) {
+  const { openModal = false, recenterToPoi = false } = options;
+  if (!poi) return;
+
+  setSelectedPoi(poi);
+
+  if (recenterToPoi && map) {
+    isMapBrowsing = true;
+    map.easeTo({ center: [poi.lng, poi.lat], duration: 650 });
+  }
+
+  if (openModal) {
+    openPOI(poi);
+  }
+}
+
+function recenterToPlayer() {
+  if (appMode !== 'tourist') return;
+  resumePlayerFollow();
+  updatePOIVisualStates();
+  showToast('Recentered on your location', window.innerWidth - 110, window.innerHeight - 230);
 }
 
 function resumePlayerFollow() {
@@ -855,10 +1326,9 @@ function resumePlayerFollow() {
 
 function getPlayerScreenPosition() {
   if (map && isMapBrowsing) {
-    const projected = map.project([playerLng, playerLat]);
-    return { x: projected.x, y: projected.y };
+    return projectToViewport(playerLng, playerLat);
   }
-  return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  return getMapViewportCenter();
 }
 
 function getCurrentMapCenter() {
@@ -927,6 +1397,7 @@ function updateLiveLocation(latitude, longitude, options = {}) {
     force: options.forceRecenter === true,
     seedReveal: options.seedReveal === true
   });
+  refreshTouristPOIs();
   return true;
 }
 
@@ -1051,48 +1522,42 @@ async function loadPoiReviews(poi) {
 // ─────────────────────────────────────────────
 //  MAP INIT
 // ─────────────────────────────────────────────
-function initMap() {
-  map = new maplibregl.Map({
-    container: 'map',
-    style: {
-      version: 8,
-      sources: {
-        'grab-tiles': {
-          type: 'raster',
-          // PRIMARY: GrabMaps tiles via backend proxy
-          tiles: [buildApiUrl('/api/tiles/{z}/{x}/{y}')],
-          // FALLBACK (uncomment if proxy unavailable):
-          // tiles: ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'],
-          tileSize: 256,
-          attribution: '© GrabMaps | © OpenStreetMap contributors'
-        }
-      },
-      layers: [{
-        id:   'grab-tiles',
-        type: 'raster',
-        source: 'grab-tiles'
-      }]
-    },
-    center: [START_LNG, START_LAT],
-    zoom: 16,
-    interactive: true,
-    dragPan: true,
-    scrollZoom: true,
-    doubleClickZoom: true,
-    keyboard: false
-  });
+async function initMap() {
+  try {
+    map = await buildGrabMapsLibraryMap();
+    console.log('Map initialized with GrabMapsLib');
+  } catch (error) {
+    console.warn('GrabMapsLib init failed, falling back to raw MapLibre bootstrap', error);
 
-  map.touchZoomRotate.enable();
-  map.touchPitch.disable();
+    let style = getFallbackMapStyle();
+    try {
+      const response = await fetch(buildApiUrl(`/api/style.json?theme=${encodeURIComponent(GRAB_STYLE_THEME)}`));
+      if (!response.ok) {
+        throw new Error(`style request failed with ${response.status}`);
+      }
+      style = await response.json();
+    } catch (styleError) {
+      console.warn('Grab style load failed, using fallback raster style', styleError);
+    }
 
-  map.on('error', () => {
-    // Silently swap to CartoDB fallback if GrabMaps proxy fails
-    map.getSource('grab-tiles').setTiles([
-      'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'
-    ]);
-  });
+    map = new maplibregl.Map({
+      container: 'map',
+      style,
+      center: [START_LNG, START_LAT],
+      zoom: 16,
+      interactive: true,
+      dragPan: true,
+      scrollZoom: true,
+      doubleClickZoom: true,
+      keyboard: false
+    });
 
-  map.on('load', () => {
+    map.touchZoomRotate.enable();
+    map.touchPitch.disable();
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  }
+
+  const handleMapReady = () => {
     mapReady = true;
     console.log('Map loaded');
     if (Number.isFinite(playerLat) && Number.isFinite(playerLng)) {
@@ -1100,7 +1565,13 @@ function initMap() {
     } else {
       updatePlayerVisualPosition();
     }
-  });
+  };
+
+  if (typeof map.loaded === 'function' && map.loaded()) {
+    handleMapReady();
+  } else {
+    map.on('load', handleMapReady);
+  }
 
   map.on('move', () => {
     updatePOIPositions();
@@ -1156,7 +1627,7 @@ function updatePOIPositions() {
   for (const poi of POIS) {
     const state = poiState[poi.id];
     if (!state.revealed && appMode === 'explore') continue;
-    const sp = map.project([poi.lng, poi.lat]);
+    const sp = projectToViewport(poi.lng, poi.lat);
     state.el.style.left = sp.x + 'px';
     state.el.style.top  = sp.y + 'px';
   }
@@ -1179,6 +1650,7 @@ function openPOI(poi) {
   activePoi = poi;
   spinTriggered = false;
   resetRouteMeta();
+  setSelectedPoi(poi);
 
   // Populate info view
   document.getElementById('mIcon').textContent    = poi.icon || '📍';
@@ -1199,6 +1671,16 @@ function closeModal() {
   activePoi = null;
   spinTriggered = false;
   resetRouteMeta();
+  updateRewardContinuation();
+}
+
+function continueAfterReward() {
+  const nextPoi = getNextRecommendedPoi(activePoi?.id);
+  closeModal();
+  if (nextPoi) {
+    focusPoi(nextPoi, { openModal: false, recenterToPoi: false });
+    showToast('Next nearby stop is ready', window.innerWidth / 2, window.innerHeight - 170);
+  }
 }
 
 function showView(id) {
@@ -1226,7 +1708,7 @@ function goToSpin() {
 // ─────────────────────────────────────────────
 function updateSpinState() {
   if (!activePoi || !map) return;
-  const sp = map.project([activePoi.lng, activePoi.lat]);
+  const sp = projectToViewport(activePoi.lng, activePoi.lat);
   const playerPos = getPlayerScreenPosition();
   const dist = Math.hypot(sp.x - playerPos.x, sp.y - playerPos.y);
   const nearby = dist <= 80;
@@ -1335,6 +1817,10 @@ function triggerSpin() {
     poiState[activePoi.id].el.classList.add('spun');
     poiState[activePoi.id].el.classList.remove('highlighted');
   }
+
+  updatePOIVisualStates();
+  renderRecommendationTray();
+  updateRewardContinuation();
 
   // Spawn particles at centre
   spawnParticles(window.innerWidth / 2, window.innerHeight / 2, 20);
@@ -1536,7 +2022,7 @@ function renderFog() {
 
   for (const pt of revealedGeo) {
     if (!map) continue;
-    const sp = map.project([pt.lng, pt.lat]);
+    const sp = projectToViewport(pt.lng, pt.lat);
     const grad = fogCtx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, REVEAL_RADIUS_PX);
     grad.addColorStop(0,   'rgba(0,0,0,1)');
     grad.addColorStop(0.6, 'rgba(0,0,0,0.85)');
@@ -1551,7 +2037,7 @@ function renderFog() {
 
   // Player reveal (current position)
   if (map) {
-    const sp = map.project([playerLng, playerLat]);
+    const sp = projectToViewport(playerLng, playerLat);
     const grad = fogCtx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, REVEAL_RADIUS_PX * 1.1);
     grad.addColorStop(0,   'rgba(0,0,0,0)');
     grad.addColorStop(0.5, 'rgba(0,0,0,0)');
@@ -1566,17 +2052,18 @@ function renderFog() {
 
   // Check POI reveal in explore mode
   if (map) {
+    const center = getMapViewportCenter();
     for (const poi of POIS) {
       const state = poiState[poi.id];
       if (state.revealed) continue;
-      const sp = map.project([poi.lng, poi.lat]);
-      const dx = sp.x - window.innerWidth  / 2;
-      const dy = sp.y - window.innerHeight / 2;
+      const sp = projectToViewport(poi.lng, poi.lat);
+      const dx = sp.x - center.x;
+      const dy = sp.y - center.y;
       const screenDist = Math.hypot(dx, dy);
       if (screenDist < REVEAL_RADIUS_PX * 0.8) {
         state.revealed = true;
         state.el.classList.add('revealed');
-        showToast('📍 New place discovered!', window.innerWidth / 2, window.innerHeight / 2 - 80);
+        showToast('📍 New place discovered!', center.x, center.y - 80);
         spawnParticles(sp.x, sp.y, 10);
       }
     }
@@ -1651,10 +2138,11 @@ function toggleMode(isExplore) {
   if (chatbot) chatbot.style.display = isExplore ? 'none' : 'flex';
 
   fogCanvas.style.display = isExplore ? 'block' : 'none';
+  updateTouristChrome();
 
   if (!isExplore) {
-    // Tourist mode: reveal all POIs
-    revealAllPOIs();
+    // Tourist mode: reveal all nearby POIs and surface the closest stops
+    refreshTouristPOIs();
   } else {
     // Explore mode: hide all non-revealed POIs, reset state
     for (const poi of POIS) {
@@ -1720,12 +2208,12 @@ async function sendChat() {
     }
     if (data.recommendations) {
       const matched = highlightRecommendedPOIs(data.recommendations, POIS);
-      applyHighlights(matched);
+      applyHighlights(matched, 'ai');
     }
   } catch (e) {
     loading.textContent  = "Here are some local favourites near you!";
     loading.className    = 'chat-msg bot';
-    applyHighlights(POIS.slice(0, 3));
+    applyHighlights(getNearestPois(Math.min(3, POIS.length)), 'nearby');
   }
 }
 
@@ -1763,14 +2251,8 @@ function highlightRecommendedPOIs(recommendations, poiArray) {
   return matched;
 }
 
-function applyHighlights(matchedPois) {
-  // Clear existing highlights
-  document.querySelectorAll('.poi').forEach(el => el.classList.remove('highlighted'));
-  // Apply gold glow to matched
-  matchedPois.forEach(poi => {
-    const state = poiState[poi.id];
-    if (state && !state.spun) state.el.classList.add('highlighted');
-  });
+function applyHighlights(matchedPois, source = recommendationSource) {
+  setRecommendedPois(matchedPois, source);
 }
 
 // ─────────────────────────────────────────────
@@ -1780,9 +2262,11 @@ async function fetchNearbyPOIs() {
   try {
     const resp = await fetch(buildApiUrl(`/api/nearby?lat=${playerLat}&lng=${playerLng}&radius=1000`));
     const data = await resp.json();
-    if (data.pois && data.pois.length > 0 && data.source && data.source !== 'mock') {
+    if (data.pois && data.pois.length > 0) {
       replacePOIs(data.pois);
-      showToast('GrabMaps live POIs loaded!', window.innerWidth / 2, 120);
+      if (data.source && data.source !== 'mock') {
+        showToast('GrabMaps live POIs loaded!', window.innerWidth / 2, 120);
+      }
     }
   } catch (e) {
     console.warn('Nearby POI fetch failed, keeping mock POIs', e);
@@ -1807,7 +2291,7 @@ function dismiss() {
   // Tourist mode default: reveal all POIs + greet
   if (appMode === 'tourist') {
     fogCanvas.style.display = 'none';
-    revealAllPOIs();
+    refreshTouristPOIs();
     initChatGreeting();
   }
 
@@ -1867,6 +2351,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initFog();
   initMap();
   buildPOILayer();
+  refreshTouristPOIs();
   initKeyboard();
   updateHUD();
   tryGPS();
